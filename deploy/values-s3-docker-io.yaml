@@ -1,0 +1,27 @@
+# use images from docker.io
+# spark-on-k8s-operator
+image:
+  repository: bekingcn/spark-operator
+  pullPolicy: IfNotPresent
+  tag: "v1-0.1.0-3.4.1"
+# bytenative spark operator 
+bnImage:
+  repository: bekingcn/bn-spark-operator
+  pullPolicy: IfNotPresent
+  tag: "v1-0.1.0-3.4.1"
+
+# if you use s3, to configure s3 connection for operator
+# create a secret named s3-connection in operator's namespace
+env:
+- name: AWS_ACCESS_KEY_ID
+  # value: minio
+  valueFrom:
+    secretKeyRef:
+      name: s3-connection
+      key: accessKey
+- name: AWS_SECRET_ACCESS_KEY
+  # value: miniopass
+  valueFrom:
+    secretKeyRef:
+      name: s3-connection
+      key: secretKey 

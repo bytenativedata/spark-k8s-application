@@ -1,0 +1,20 @@
+apiVersion: spark.bytenative.com/v1
+kind: SparkJob
+metadata:
+  name: pi-job-example-341
+  namespace: sparkjobs
+spec:
+  spark:
+    sparkVersion: "3.4.1"
+    mode: cluster
+    imagePullPolicy: IfNotPresent
+    image: bnp.me/bn-spark-operator/spark:v3.4.1
+    restartPolicy:
+      type: Never
+    driver:
+      serviceAccount: spark-runner-spark
+  job:
+    type: JarJob
+    jar:
+      mainApplicationFile: "local:///opt/spark/examples/jars/spark-examples_2.12-3.4.1.jar"
+      mainClass: org.apache.spark.examples.SparkPi

@@ -1,0 +1,119 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-connection
+  namespace: sparkjobs
+type: Opaque
+data:
+  accessKey: bWluaW8=
+  secretKey: bWluaW9wYXNz
+
+---
+apiVersion: spark.bytenative.com/v1
+kind: SparkCatalog
+metadata:
+  name: ib-hive-catalog
+  namespace: sparkjobs
+spec:
+  name: ib_hive_cat
+  implClass: org.apache.iceberg.spark.SparkCatalog
+  jars: 
+    - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
+  catalogConfigs:
+    type: hive
+    warehouse: s3a://spark-dwh/ib_hive_cat
+    uri: thrift://172.22.80.8:9083
+  sparkConfigs: {}
+
+---
+apiVersion: spark.bytenative.com/v1
+kind: SparkCatalog
+metadata:
+  name: ib-hadoop-catalog
+  namespace: sparkjobs
+spec:
+  name: ib_hadoop_cat
+  implClass: org.apache.iceberg.spark.SparkCatalog
+  jars: 
+    - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
+  catalogConfigs:
+    type: hadoop
+    warehouse: s3a://spark-dwh/ib_hadoop_cat
+  sparkConfigs: {}
+
+---
+apiVersion: spark.bytenative.com/v1
+kind: SparkEnvSet
+metadata:
+  name: envset-mysql
+  namespace: sparkjobs
+spec:
+  configs: {}
+  deps:
+    jars:
+      - s3a://spark-deps/public/jars/mysql-connector-java-8.0.17.jar
+
+---
+apiVersion: s3.bytenative.com/v1alpha1
+kind: S3Connection
+metadata:
+  name: s3-connection-minio
+  namespace: sparkjobs
+spec:
+  host: 172.22.80.8
+  port: 9000
+  accessStyle: Path
+  credentials:
+    secret: s3-connection
+
+---
+apiVersion: spark.bytenative.com/v1
+kind: SparkTemplate
+metadata:
+  name: spark-template-341-refs
+  namespace: sparkjobs
+spec:
+  sparkVersion: "3.4.1"
+  mode: cluster
+  imagePullPolicy: IfNotPresent
+  image: bnp.me/bn-spark-operator/spark:v3.4.1
+  restartPolicy:
+    type: Never
+  volumes:
+    - name: "spark-local-dir-test-volume"
+      emptyDir: {}
+  driver:
+    cores: 1
+    coreLimit: "1200m"
+    memory: "512m"
+    labels:
+      version: 3.4.1
+    serviceAccount: spark-runner-spark
+    volumeMounts:
+      - name: "spark-local-dir-test-volume"
+        mountPath: "/tmp/local-test"
+  executor:
+    cores: 1
+    instances: 1
+    memory: "512m"
+    labels:
+      version: 3.4.1
+    volumeMounts:
+      - name: "spark-local-dir-test-volume"
+        mountPath: "/tmp/local-test"
+  sparkUIOptions:
+    servicePort: 9090
+    servicePortName: "spark-driver-ui-port"
+    serviceType: NodePort
+  s3Connection:
+    reference: s3-connection-minio
+  catalogs:
+  - reference: ib-hadoop-catalog
+  - reference: ib-hive-catalog
+  envSets:
+  - reference: envset-mysql
+  sparkConf:
+    spark.sql.catalog.spark_catalog.defaultDatabase: default
+    # spark.sql.defaultCatalog: ib_hadoop_cat
+    # spark.sql.warehouse.dir: s3a://spark-dwh/test_catalog

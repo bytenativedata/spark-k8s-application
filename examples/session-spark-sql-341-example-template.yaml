@@ -1,0 +1,26 @@
+apiVersion: spark.bytenative.com/v1
+kind: SparkSession
+metadata:
+  name: session-spark-sql-341-temp
+  namespace: sparkjobs
+spec:
+  sparkTemplate: spark-template-341-refs
+  spark:
+    sparkVersion: 3.4.1
+    image: bnp.me/bn-spark-operator/spark:v3.4.1
+    driver:
+      labels:
+        version: 3.4.1
+      serviceAccount: spark-runner-spark
+    executor:
+      labels:
+        version: 3.4.1
+  session:
+    hiveServer2UIOptions:
+      servicePort: 30084
+      servicePortName: "spark-driver-ui-port"
+      serviceType: NodePort
+    hiveServer2ThriftOptions:
+      servicePort: 31000
+      servicePortName: "spark-driver-thrift-port"
+      serviceType: NodePort

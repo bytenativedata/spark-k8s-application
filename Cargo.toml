@@ -1,0 +1,36 @@
+[workspace]
+members = [
+    "crates/common", "crates/crd", "crates/operator-bin"
+]
+
+[workspace.package]
+version = "0.0.0-dev"
+description = "TBD"
+authors = ["Byte Native Platform"]
+license = "TBD"
+edition = "2021"
+repository = "TBD"
+
+[workspace.dependencies]
+anyhow = "1.0"
+built = { version =  "0.6", features = ["chrono", "git2"] }
+clap = { version = "4.3.19", features = ["derive", "cargo", "env"] }
+k8s-openapi = { version = "0.19.0", default-features = false, features = ["schemars", "v1_27"] }
+kube = { version = "0.85.0", features = ["jsonpatch", "runtime", "derive"] }
+serde = { version = "=1.0.171", features = ["derive"] } # We need to pin 1.0.171 as of now, as otherwise Nix builds break because of https://github.com/serde-rs/serde/issues/2538
+serde_json = "1.0.104"
+json-patch = "1.0.104"
+serde_yaml = "0.9.25"
+tracing = "0.1.37"
+opentelemetry = { version = "0.20.0", features = ["rt-tokio"] }
+opentelemetry-jaeger = { version = "0.19.0", features = ["rt-tokio"] }
+tracing-opentelemetry = "0.21.0"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+thiserror = "1.0.44"
+schemars = "0.8.12"
+tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
+futures = "0.3.28"
+strum = { version = "0.25.0", features = ["derive"] }
+snafu = "0.7.5"
+serde_valid = { version = "0.16.3" }
+rand = { version = "0.8.5" }

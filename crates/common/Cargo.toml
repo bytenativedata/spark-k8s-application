@@ -1,0 +1,22 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing.workspace = true
+tracing-subscriber.workspace = true
+clap.workspace = true
+schemars.workspace = true
+thiserror.workspace = true
+kube.workspace = true
+strum.workspace = true
+serde_yaml.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+opentelemetry.workspace = true
+opentelemetry-jaeger.workspace = true
+tracing-opentelemetry.workspace = true
+rand.workspace = true

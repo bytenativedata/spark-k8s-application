@@ -1,0 +1,89 @@
+apiVersion: spark.bytenative.com/v1
+kind: SparkSession
+metadata:
+  name: session-spark-sql-341
+  namespace: sparkjobs
+spec:
+  spark:
+    sparkVersion: "3.4.1"
+    mode: cluster
+    imagePullPolicy: IfNotPresent
+    image: bnp.me/bn-spark-operator/spark:v3.4.1
+    restartPolicy:
+      type: Never
+    volumes:
+      - name: "spark-local-dir-test-volume"
+        emptyDir: {}
+    driver:
+      cores: 1
+      coreLimit: "1200m"
+      memory: "512m"
+      labels:
+        version: 3.4.1
+      serviceAccount: spark-runner-spark
+      volumeMounts:
+        - name: "spark-local-dir-test-volume"
+          mountPath: "/tmp/local-test"
+    executor:
+      cores: 1
+      instances: 1
+      memory: "512m"
+      labels:
+        version: 3.4.1
+      volumeMounts:
+        - name: "spark-local-dir-test-volume"
+          mountPath: "/tmp/local-test"
+    sparkUIOptions:
+      servicePort: 9090
+      servicePortName: "spark-driver-ui-port"
+      serviceType: NodePort
+    s3Connection:
+      inline:
+        host: 172.22.80.8
+        port: 9000
+        accessStyle: Path
+        credentials:
+          secret: s3-connection
+        #   inline:
+        #     accessKey: minio
+        #     secretKey: miniopass
+    catalogs:
+    - inline:
+        name: ib_hadoop_cat
+        implClass: org.apache.iceberg.spark.SparkCatalog
+        jars: 
+          - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
+        catalogConfigs:
+          type: hadoop
+          warehouse: s3a://spark-dwh/ib_hadoop_cat
+        sparkConfigs: {}
+    - inline:
+        name: ib_hive_cat
+        implClass: org.apache.iceberg.spark.SparkCatalog
+        jars: 
+          - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
+        catalogConfigs:
+          type: hive
+          warehouse: s3a://spark-dwh/ib_hive_cat
+          uri: thrift://172.22.80.8:9083
+        sparkConfigs: {}
+    envSets:
+    - inline:
+        configs: {}
+        deps:
+          jars:
+            - s3a://spark-deps/public/jars/mysql-connector-java-8.0.17.jar
+    sparkConf:
+      spark.sql.catalog.spark_catalog.defaultDatabase: default
+      # spark.sql.defaultCatalog: ib_hadoop_cat
+      # spark.sql.warehouse.dir: s3a://spark-dwh/test_catalog
+
+  session:
+    hiveServer2UIOptions:
+      servicePort: 30084
+      servicePortName: "spark-driver-ui-port"
+      serviceType: NodePort
+    hiveServer2ThriftOptions:
+      servicePort: 31000
+      servicePortName: "spark-driver-thrift-port"
+      serviceType: NodePort

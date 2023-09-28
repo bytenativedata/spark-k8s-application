@@ -1,0 +1,77 @@
+FROM eclipse-temurin:11-jre-focal
+
+ARG spark_uid=185
+
+RUN groupadd --system --gid=${spark_uid} spark && \
+    useradd --system --uid=${spark_uid} --gid=spark spark
+
+RUN set -ex && \
+    apt-get update && \
+    ln -s /lib /lib64 && \
+    apt install -y gnupg2 wget bash tini libc6 libpam-modules krb5-user libnss3 procps net-tools gosu && \
+    mkdir -p /opt/spark && \
+    mkdir -p /opt/spark/examples && \
+    mkdir -p /opt/spark/work-dir && \
+    touch /opt/spark/RELEASE && \
+    chown -R spark:spark /opt/spark && \
+    rm /bin/sh && \
+    ln -sv /bin/bash /bin/sh && \
+    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
+    chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
+    rm -rf /var/cache/apt/* && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Apache Spark
+# https://downloads.apache.org/spark/KEYS
+# Use aliyun mirror
+ARG SPARK_TGZ_URL=https://archive.apache.org/dist/spark/spark-3.1.1/spark-3.1.1-bin-hadoop2.7.tgz
+ARG AWS_JAVA_SDK_JAR=aws-java-sdk-1.7.4.jar
+ARG HADOOP_AWS_JAR=hadoop-aws-2.7.4.jar
+ARG OPERATOR_JAR=spark-oper-sql_3.1.1-0.1.0.jar
+ARG ENTRYPOINT=entrypoints/entrypoint-3.1.1.sh
+
+RUN set -ex; \
+    export SPARK_TMP="$(mktemp -d)"; \
+    cd $SPARK_TMP; \
+    wget -nv -O spark.tgz "$SPARK_TGZ_URL"; \
+    \
+    tar -xf spark.tgz --strip-components=1; \
+    chown -R spark:spark .; \
+    mv jars /opt/spark/; \
+    mv bin /opt/spark/; \
+    mv sbin /opt/spark/; \
+    mv kubernetes/dockerfiles/spark/decom.sh /opt/; \
+    mv examples /opt/spark/; \
+    mv kubernetes/tests /opt/spark/; \
+    mv data /opt/spark/; \
+    cd ..; \
+    rm -rf "$SPARK_TMP";
+
+COPY $ENTRYPOINT /opt/entrypoint.sh
+
+ENV SPARK_HOME /opt/spark
+
+# added jars and configs
+ADD jars/$HADOOP_AWS_JAR $SPARK_HOME/jars
+ADD jars/$AWS_JAVA_SDK_JAR $SPARK_HOME/jars
+ADD jars/$OPERATOR_JAR $SPARK_HOME/jars
+ADD jars/jmx_prometheus_javaagent-0.11.0.jar /prometheus/
+
+RUN mkdir -p /opt/spark/conf-log4j
+ADD conf/metrics.properties /etc/metrics/conf
+ADD conf/prometheus.yaml /etc/metrics/conf
+ADD conf/log4j-debug.properties /opt/spark/conf-log4j
+ADD conf/log4j.properties /opt/spark/conf-log4j
+# end - added jars and configs
+
+WORKDIR /opt/spark/work-dir
+
+RUN chmod 644 $SPARK_HOME/jars/$HADOOP_AWS_JAR && \
+    chmod 644 $SPARK_HOME/jars/$AWS_JAVA_SDK_JAR && \
+    chmod 644 $SPARK_HOME/jars/$OPERATOR_JAR && \
+    chmod 644 /prometheus/jmx_prometheus_javaagent-0.11.0.jar && \
+    chmod g+w /opt/spark/work-dir && \
+    chmod a+x /opt/decom.sh && \
+    chmod a+x /opt/entrypoint.sh
+
+ENTRYPOINT [ "/opt/entrypoint.sh" ]

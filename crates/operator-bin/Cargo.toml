@@ -1,0 +1,32 @@
+[package]
+name = "operator-bin"
+description = "Application Runtime Operator for Apache Spark"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+common = { path = "../common" }
+crd = { path = "../crd" }
+
+anyhow.workspace = true
+tracing.workspace = true
+clap.workspace = true
+kube.workspace = true
+k8s-openapi.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+futures.workspace = true
+strum.workspace = true
+snafu.workspace = true
+
+[build-dependencies]
+built.workspace = true

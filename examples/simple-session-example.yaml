@@ -1,0 +1,23 @@
+apiVersion: spark.bytenative.com/v1
+kind: SparkSession
+metadata:
+  name: simple-session-example-341
+  namespace: sparkjobs
+spec:
+  spark:
+    sparkVersion: "3.4.1"
+    mode: cluster
+    imagePullPolicy: IfNotPresent
+    image: bnp.me/bn-spark-operator/spark:v3.4.1
+    driver:
+      serviceAccount: spark-runner-spark
+    sparkUIOptions:
+      servicePort: 9090
+      servicePortName: "spark-driver-ui-port"
+      serviceType: NodePort
+  session:
+    hiveServer2ThriftOptions:
+      # the port of hive server2 from remote database tools or beeline to connect
+      servicePort: 31000
+      servicePortName: "spark-driver-thrift-port"
+      serviceType: NodePort
