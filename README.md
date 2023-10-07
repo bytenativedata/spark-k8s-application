@@ -8,7 +8,7 @@
 - User-friendly model definition, supporting:
   - Reorganizing Spark Jobs, Sessions, and Scheduled Jobs based on different scenarios.
   - Adding configurations for Catalog, S3Connection, Jdbc Datasource, and pre-defined resources.
-  - Supporting Spark configuration template reusability, avoiding the need for reconfiguration every time and enabling quick deployment from development to production tasks. Template configurations can be overridden based on different applications.different applications.
+  - Supporting Spark configuration template reusability, avoiding the need for reconfiguration every time and enabling quick deployment from development to production tasks. Template configurations can be overridden based on different applications.
 - Session mode. Data developers or analysts can connect to sessions through various JDBCs or HiveServer2-compatible tools for interactive SQL execution.
 - Supporting direct SQL definition within tasks or configuration of SQL files, targeting data developers.
 - With the Web Console, support
