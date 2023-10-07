@@ -1,38 +1,39 @@
-### What's Bytenative Spark Operator
+### 关于 Bytenative Spark Operator
 
 ![](./docs/img/bn-spark-operator.png)
 
-**Features**
+**特性**
+- 基于 Google's Spark on K8S Operator，构建云原生的 Spark 运行环境
+- 用户友好的模型定义，支持
+    - 重新根据场景划分Spark Job、Session和ScheduledJob
+    - 增加Catalog、S3Connection、Jdbc Datasource的配置，以及资源预定义
+    - 支持Spark配置模板重用，避免每次使用需要重新配置，从开发到生产任务执行快速部署. 根据不同应用覆写模板配置.
 
-- Based on Google's Spark on K8S Operator, build a cloud-native Spark operating environment.
-- User-friendly model definition, supporting:
-  - Reorganizing Spark Jobs, Sessions, and Scheduled Jobs based on different scenarios.
-  - Adding configurations for Catalog, S3Connection, Jdbc Datasource, and pre-defined resources.
-  - Supporting Spark configuration template reusability, avoiding the need for reconfiguration every time and enabling quick deployment from development to production tasks. Template configurations can be overridden based on different applications.different applications.
-- Session mode. Data developers or analysts can connect to sessions through various JDBCs or HiveServer2-compatible tools for interactive SQL execution.
-- Supporting direct SQL definition within tasks or configuration of SQL files, targeting data developers.
-- With the Web Console, support
-  - Multi-tenancy and user management.
-  - Workspace management.
-  - SQL Editor and file management.
-  - Artifacts management. Including Jars, Files, SQL Scripts, etc.
-  - Providing out-of-the-box support for production environments.
+- Session 模式。数据开发或者分析人员可以通过各种JDBC或者支持HiveServer2的工具连接到Session，交互式执行SQL
+- 支持在任务中直接定义SQL，或者配置SQL文件，面向数据开发人员
+
+- 结合 Web Console，支持
+    - 多租户，以及用户管理
+    - 工作空间 (Workspace) 管理
+    - SQL Editor 和文件管理
+    - 物件管理。 包括Jars、Files、SQL Scripts等
+    - 满足开箱即用的生产环境支持
 
 ### Build Docker images
-These images are availiable from hub.docker.com. Please reference [values-s3-docker-io.yam](./deploy/values-s3-docker-io.yaml) for helm installation.
+Images 也可从 hub.docker.com 获得。请参考 [values-s3-docker-io.yam](./deploy/values-s3-docker-io.yaml) 通过 helm 进行安装.
 - bekingcn/spark:v3.4.1
 - bekingcn/spark-operator:v1-0.1.0-3.4.1
 - bekingcn/bn-spark-operator:v1-0.1.0-3.4.1
 
 #### 1. Spark Image
-This image follow the official script, but jars were added for the new feature. 
+本 image 与官方有些差异，主要是添加了额外的jar，以及支持更多的Spark版本
 
 ```SH
 docker build -f Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spark:v3.4.1 .
 ```
 
 #### 2. Google's Spark Operator
-This image was changed to support new features and new Spark versions, has to be re-build with our scripts. The official image only support Spark 3.1.1 as the latest version.
+本 image 基于官方进行更改以支持新功能和新的 Spark 版本，必须使用我们的脚本重新构建。官方 image 仅支持Spark 3.1.1作为最新版本。
 
 ```SH
 docker build -f spark-operator/Dockerfile-sko-spark-template -t bnp.me/bn-spark-operator/spark-operator:v1-0.1.0-3.4.1 --build-arg VERSION=3.4.1 --build-arg REGISTRY=bnp.me/ .
@@ -46,7 +47,7 @@ docker build -f Dockerfile -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.
 
 ### Installing Kubernetes using K3s
 
-K3s provides a quick way of installing Kubernetes. On your control node run the following command to install K3s:
+K3s 提供了一种安装 Kubernetes 的快速方法。在你的节点上运行以下命令以安装 K3s：
 
 ```bash
 curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
@@ -55,9 +56,9 @@ curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
 curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --disable traefik
 ```
 
-So long as you have an Internet connection K3s will download and automatically configure a simple Kubernetes environment.
+如果要在应用程序中将 S3 连接与密钥一起使用，则必须在安装版本时对其进行配置。
 
-Create a symlink to the Kubernetes configuration from your home directory to allow tools like Helm to find the correct configuration.
+首先，在 Spark 运算符命名空间中添加 S3 凭据（如果不存在，则为 Spark Operator 创建一个新命名空间）
 
 ```bash
 mkdir ~/.kube
@@ -85,7 +86,7 @@ First, Add a S3 credentials in the Spark operator namespace (create a new namesp
 kubectl create secret generic s3-connection --from-literal=accessKey=minio --from-literal=secretKey=miniopass -n spark-operator
 ```
 
-And then config a values.yaml for installing release.
+然后配置一个 values.yaml 用于安装 helm release
 ```YAML
 env:
 - name: AWS_ACCESS_KEY_ID
@@ -100,7 +101,7 @@ env:
       key: secretKey
 ```
 
-Run helm with the values.yaml
+使用 values.yaml 运行 helm
 
 ```SH
 helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operator --create-namespace --set logLevel=3 --set sparkJobNamespace=sparkjobs -f values-spark-3.4.1.yaml
@@ -145,7 +146,7 @@ spec:
 **[More examples](./examples)**
 
 
-### Supports on Spark versions
+### 对 Spark 版本的支持
 
   | Spark Operator  | Spark Job         | Spark Session     |
   | --              | --                | --                |
@@ -157,5 +158,3 @@ spec:
   | 3.3.3           | all               | all               |  
   | 3.4.1           | all               | all               |
 
-### Road mapping
-TODO
