@@ -25,9 +25,9 @@ curl https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0
 # build 3 docker images
 docker build -f ./docker/Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spark:v3.4.1 ./docker
 docker build -f ./docker/spark-operator/Dockerfile-sko-spark-template -t bnp.me/bn-spark-operator/spark-operator:v1-0.1.0-3.4.1 --build-arg VERSION=3.4.1 --build-arg REGISTRY=bnp.me/ ./docker
-docker build -f ./docker/Dockerfile -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.0-3.4.1 ./docker
+docker build -f ./docker/Dockerfile-with-builder -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.0-3.4.1 ./docker
 
-minikube image build -f ./docker/Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spark:v3.4.1 ./docker
+minikube image build -f Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spark:v3.4.1 ./docker
 minikube image build -f spark-operator/Dockerfile-sko-spark-template -t bnp.me/bn-spark-operator/spark-operator:v1-0.1.0-3.4.1 --build-arg VERSION=3.4.1 --build-arg REGISTRY=bnp.me/ ./docker
 minikube image build -f Dockerfile -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.0-3.4.1 ./docker
 
@@ -36,7 +36,7 @@ minikube image build -f Dockerfile -t bnp.me/bn-spark-operator/bn-spark-operator
 kubectl create namespace spark-operator
 # create a namespace for your spark jobs, or use the same nameapsce with spark operators as default.
 kubectl create namespace sparkjobs
-helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operator --create-namespace --set logLevel=3 --set sparkJobNamespace=sparkjobs
+helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operator --create-namespace --set logLevel=3 --set sparkJobNamespace=sparkjobs -f deploy/values-s3-docker-io.yaml
 
 
 # RUN examples
