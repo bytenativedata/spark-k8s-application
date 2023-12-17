@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Rust build env
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-cargo build --bins -r
+# Rust build from local
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# source "$HOME/.cargo/env"
+# cargo build --bins -r
 # copy the bin for docker image building
-cp ./target/release/operator-bin ./docker
+# cp ./target/release/operator-bin ./docker
 
 # with k3s & disabled traefik due to resource limitation
 # curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --disable traefik
@@ -14,7 +14,6 @@ cp ./target/release/operator-bin ./docker
 
 # with minikube default
 minikube start --cpus=4 --memory=12gb
-
 # NOTE: reuse the Docker daemon inside minikube cluster for build images into minikube
 eval $(minikube docker-env)
 
@@ -27,22 +26,29 @@ docker build -f ./docker/Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spar
 docker build -f ./docker/spark-operator/Dockerfile-sko-spark-template -t bnp.me/bn-spark-operator/spark-operator:v1-0.1.0-3.4.1 --build-arg VERSION=3.4.1 --build-arg REGISTRY=bnp.me/ ./docker
 docker build -f ./docker/Dockerfile-with-builder -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.0-3.4.1 ./docker
 
-minikube image build -f Dockerfile-spark-3.4.1 -t bnp.me/bn-spark-operator/spark:v3.4.1 ./docker
-minikube image build -f spark-operator/Dockerfile-sko-spark-template -t bnp.me/bn-spark-operator/spark-operator:v1-0.1.0-3.4.1 --build-arg VERSION=3.4.1 --build-arg REGISTRY=bnp.me/ ./docker
-minikube image build -f Dockerfile -t bnp.me/bn-spark-operator/bn-spark-operator:v1-0.1.0-3.4.1 ./docker
-
 # install operators with helm
 # create a namespace for spark operators
 kubectl create namespace spark-operator
 # create a namespace for your spark jobs, or use the same nameapsce with spark operators as default.
 kubectl create namespace sparkjobs
-helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operator --create-namespace --set logLevel=3 --set sparkJobNamespace=sparkjobs -f deploy/values-s3-docker-io.yaml
+# create an s3 secret for spark-operator
+kubectl create secret generic s3-connection --from-literal=accessKey=minio --from-literal=secretKey=miniopass -n spark-operator
+helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operator --create-namespace --set logLevel=3 --set sparkJobNamespace=sparkjobs
+
+# RUN Spark-PI example
+kubectl apply -f examples/pi-job-example.yaml
+
+# Set up template and resources
+# kubectl apply -f examples/spark-template-341.yaml
+
+# Should setup Minio as S3 storage first
+# and upload jars, csv and sql files
+# Run Sql job example
+# kubectl apply -f examples/job-spark-sqlfile-341-example.yaml
+
+# Start up Session example
+# kubectl apply -f examples/session-spark-sql-341-example.yaml
 
 
-# RUN examples
-# s3-connection with a minio
-# kubectl create secret generic s3-connection --from-literal=accessKey=minio --from-literal=secretKey=miniopass -n spark-operator
-kubectl 
-
-
-rm ./target/release/operator-bin -f
+# Stop operators
+# helm uninstall spark-runner --namespace spark-operator

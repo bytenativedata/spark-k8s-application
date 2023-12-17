@@ -17,6 +17,10 @@ RUN sed -i 's#http://archive.ubuntu.com#http://mirrors.aliyun.com#g' /etc/apt/so
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
     rm -rf /var/cache/apt/* && \
     rm -rf /var/lib/apt/lists/*
+    
+# resolve issue: libssl.so.1.1: cannot open shared object file
+RUN wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb
 
 COPY operator-bin /usr/bin/
 COPY entrypoints/spark-operator-entrypoint.sh /usr/bin/entrypoint.sh

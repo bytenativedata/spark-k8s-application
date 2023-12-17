@@ -1,41 +1,35 @@
-# FROM rust:1.71.0-buster as builder
-FROM rust:1.71.0-buster
+FROM rust:1.71.0-buster as builder
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates make build-essential cmake protobuf-compiler curl lld pkg-config libssl-dev openssl && \
     rm -rf /var/lib/apt/lists/*
-
-#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh && \
-#     source "$HOME/.cargo/env"
 
 RUN git clone https://github.com/bytenativedata/spark-k8s-application.git && \
     cd spark-k8s-application && \
     cargo build --bins -r
 
-# FROM ubuntu:22.04
-# 
-# ENV LANG en_US.utf8
-# 
-# ARG spark_uid=185
-# 
-# RUN groupadd --system --gid=${spark_uid} spark && \
-#     useradd --system --uid=${spark_uid} --gid=spark spark
-# 
-# RUN sed -i 's#http://archive.ubuntu.com#http://mirrors.aliyun.com#g' /etc/apt/sources.list && \
-#     apt-get update && \
-#     apt install -y gnupg2 wget bash tini libc6 libpam-modules krb5-user libnss3 procps net-tools gosu  libssl-dev openssl && \
-#     rm /bin/sh && \
-#     ln -sv /bin/bash /bin/sh && \
-#     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
-#     chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
-#     rm -rf /var/cache/apt/* && \
-#     rm -rf /var/lib/apt/lists/*
-# 
-# COPY --from=builder /spark-k8s-application/target/release/operator-bin /usr/bin/
-RUN cp /spark-k8s-application/target/release/operator-bin /usr/bin/ && \
-    cd / && \
-    rm spark-k8s-application -rf
+FROM ubuntu:22.04
 
+ENV LANG en_US.utf8
 
+ARG spark_uid=185
+
+RUN groupadd --system --gid=${spark_uid} spark && \
+    useradd --system --uid=${spark_uid} --gid=spark spark
+
+RUN apt-get update && \
+    apt install -y gnupg2 wget bash tini libc6 libpam-modules krb5-user libnss3 procps net-tools gosu && \
+    rm /bin/sh && \
+    ln -sv /bin/bash /bin/sh && \
+    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
+    chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
+    rm -rf /var/cache/apt/* && \
+    rm -rf /var/lib/apt/lists/*
+
+# resolve issue: libssl.so.1.1: cannot open shared object file
+RUN wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb
+
+COPY --from=builder /spark-k8s-application/target/release/operator-bin /usr/bin/
 COPY entrypoints/spark-operator-entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod a+x /usr/bin/operator-bin && \
     chmod a+x /usr/bin/entrypoint.sh
