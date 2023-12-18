@@ -39,42 +39,15 @@ spec:
       serviceType: NodePort
     s3Connection:
       inline:
-        host: 172.22.80.8
+        host: minio.default.svc.cluster.local
         port: 9000
         accessStyle: Path
         credentials:
-          secret: s3-connection
-    catalogs:
-    - inline:
-        name: ib_hadoop_cat
-        implClass: org.apache.iceberg.spark.SparkCatalog
-        jars: 
-          - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
-        catalogConfigs:
-          type: hadoop
-          warehouse: s3a://spark-dwh/ib_hadoop_cat
-        sparkConfigs: {}
-    - inline:
-        name: ib_hive_cat
-        implClass: org.apache.iceberg.spark.SparkCatalog
-        jars: 
-          - s3a://spark-deps/public/jars/iceberg-spark-runtime-3.1_2.12-0.13.2.jar
-        catalogConfigs:
-          type: hive
-          warehouse: s3a://spark-dwh/ib_hive_cat
-          uri: thrift://172.22.80.8:9083
-        sparkConfigs: {}
-    envSets:
-    - inline:
-        configs: {}
-        deps:
-          jars:
-            - s3a://spark-deps/public/jars/mysql-connector-java-8.0.17.jar
-    sparkConf:
-      spark.sql.catalog.spark_catalog.defaultDatabase: default
-      # spark.sql.defaultCatalog: ib_hadoop_cat
-      # spark.sql.warehouse.dir: s3a://spark-dwh/test_catalog
+          # secret: s3-connection
+          inline:
+            accessKey: minio
+            secretKey: miniopass
 
   job:
     type: SqlFileJob
-    sqlFile: s3a://spark-deps/sql/examples/tripdata-report-hive-cat.sql
+    sqlFile: s3a://spark-deps/sql/examples/tripdata-report.sql

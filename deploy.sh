@@ -38,17 +38,36 @@ helm upgrade spark-runner deploy/helm/spark-operator -i --namespace spark-operat
 # RUN Spark-PI example
 kubectl apply -f examples/pi-job-example.yaml
 
-# Set up template and resources
-# kubectl apply -f examples/spark-template-341.yaml
-
 # Should setup Minio as S3 storage first
-# and upload jars, csv and sql files
-# Run Sql job example
-# kubectl apply -f examples/job-spark-sqlfile-341-example.yaml
+helm repo add minio https://charts.min.io/
+helm install --set resources.requests.memory=512Mi --set replicas=1 --set persistence.enabled=false --set mode=standalone --set rootUser=minio,rootPassword=miniopass minio minio/minio
 
-# Start up Session example
+# forward port
+export POD_NAME=$(kubectl get pods --namespace default -l "release=minio" -o jsonpath="{.items[0].metadata.name}")
+nohup kubectl port-forward $POD_NAME 9000 --namespace default &
+# export Minio host
+export MC_HOST_minio_local=http://minio:miniopass@localhost:9000
+
+# download mc
+curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o $HOME/minio-binaries/mc
+chmod +x $HOME/minio-binaries/mc
+export PATH=$PATH:$HOME/minio-binaries/
+
+# and upload jars, csv and sql files
+mc mb minio_local/spark-dwh
+mc mb minio_local/spark-deps
+mc cp examples/sql/*.csv minio_local/spark-dwh/csv/
+mc cp examples/sql/*.sql minio_local/spark-deps/sql/examples/
+# mc cp docker/jars/*.jar miniolocal/spark-deps/public/jars/
+
+# Run Sql job example
+kubectl apply -f examples/job-spark-sqlfile-341-example.yaml
+
+# Start up Session example with template resources
+# kubectl apply -f examples/spark-template-341.yaml
 # kubectl apply -f examples/session-spark-sql-341-example.yaml
 
 
 # Stop operators
 # helm uninstall spark-runner --namespace spark-operator
+# helm uninstall minio-1702894300
