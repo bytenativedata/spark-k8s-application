@@ -67,7 +67,17 @@ kubectl apply -f examples/job-spark-sqlfile-341-example.yaml
 # kubectl apply -f examples/spark-template-341.yaml
 # kubectl apply -f examples/session-spark-sql-341-example.yaml
 
+# connect with beeline with MINIKUBE-IP
+# export MINIKUBE_IP=$(minikube ip)
+# wget https://archive.apache.org/dist/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz
+# tar -xvzf spark-3.4.1-bin-hadoop3.tgz
+# ./spark-3.4.1-bin-hadoop3/bin/beeline -u jdbc:hive2://$MINIKUBE_IP:31000/default
+
+# RUN sql, you could create iceberg table with hadoop catalog (ib_hadoop_cat) now, 
+# ref. examples/sql/tripdata-report-hive-cat.sql, which works with hive catlog (ib_hive_cat)
+
 
 # Stop operators
 # helm uninstall spark-runner --namespace spark-operator
 # helm uninstall minio-1702894300
+
